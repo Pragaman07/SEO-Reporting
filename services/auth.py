@@ -1,6 +1,7 @@
 import os
 import json
-from google.oauth2 import service_account
+from google.oauth2.credentials import Credentials
+from google.auth.transport.requests import Request
 
 SCOPES = [
     'https://www.googleapis.com/auth/webmasters.readonly',
@@ -10,25 +11,42 @@ SCOPES = [
 
 def get_credentials():
     """
-    Returns Google Cloud Credentials.
-    1. Checks for 'GOOGLE_CREDENTIALS' env var (Production/Vercel).
-    2. Fallback to 'credentials.json' (Local Dev).
+    Returns Google Cloud Credentials using OAuth 2.0 Token.
+    1. Checks for 'GOOGLE_TOKEN' env var (Production/Vercel).
+    2. Fallback to 'token.json' (Local Dev).
+    Note: 'credentials.json' is NOT used for auth here, only for generating the token initially.
     """
-    # 1. Environment Variable (Vercel)
-    env_creds = os.environ.get('GOOGLE_CREDENTIALS')
-    if env_creds:
-        try:
-            creds_dict = json.loads(env_creds)
-            return service_account.Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
-        except json.JSONDecodeError:
-            raise ValueError("Error: GOOGLE_CREDENTIALS env var is not valid JSON.")
-
-    # 2. Local File (Dev)
-    local_file = 'credentials.json'
-    if os.path.exists(local_file):
-        return service_account.Credentials.from_service_account_file(local_file, scopes=SCOPES)
+    creds = None
     
-    # 3. Fail
-    raise FileNotFoundError(
-        "No credentials found. Set 'GOOGLE_CREDENTIALS' env var or place 'credentials.json' in root."
-    )
+    # 1. Environment Variable (Vercel Production)
+    env_token = os.environ.get('GOOGLE_TOKEN')
+    if env_token:
+        try:
+            token_info = json.loads(env_token)
+            creds = Credentials.from_authorized_user_info(token_info, SCOPES)
+        except json.JSONDecodeError:
+            print("Error: GOOGLE_TOKEN env var is not valid JSON.")
+
+    # 2. Local File (Dev Fallback)
+    if not creds and os.path.exists('token.json'):
+        try:
+            creds = Credentials.from_authorized_user_file('token.json', SCOPES)
+        except Exception as e:
+            print(f"Error reading token.json: {e}")
+
+    # 3. Refresh if expired
+    if creds and creds.expired and creds.refresh_token:
+        try:
+            creds.refresh(Request())
+        except Exception as e:
+            print(f"Error refreshing token: {e}")
+            # If refresh fails in serverless, we generally can't fix it without re-auth locally
+            # But let's raise so the UI knows.
+            raise e
+
+    if not creds or not creds.valid:
+        raise ValueError(
+            "No valid token found. In Vercel, set 'GOOGLE_TOKEN' env var to the content of 'token.json'."
+        )
+
+    return creds
