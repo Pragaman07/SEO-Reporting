@@ -1,54 +1,61 @@
-from googleapiclient.discovery import build
+import gspread
 from .auth import get_credentials
 
-def fetch_content_log(spreadsheet_id='1KL7Yvnytlb_ErsfO0lgDczR5Calkx620nzQONjGfrIU'):
+def fetch_content_log():
     """
-    Fetches Content Log and Site Health from Google Sheets.
+    Fetches Content Log and Site Health from Google Sheets using gspread.
+    Returns: { "health_score": int, "total_views": int, "activities": list }
     """
-    creds = get_credentials()
-    service = build('sheets', 'v4', credentials=creds)
-
     try:
-        sheet = client.open("Filing Buddy Content Engine & SEO Setup").worksheet("Content_Log")
-        data = sheet.get_all_records()
+        # 1. Authorize gspread
+        creds = get_credentials()
+        client = gspread.authorize(creds)
+
+        # 2. Open Workbook
+        # Ideally use ID if possible, but Name is fine if unique
+        # Using ID is safer: 1KL7Yvnytlb_ErsfO0lgDczR5Calkx620nzQONjGfrIU
+        wb = client.open_by_key('1KL7Yvnytlb_ErsfO0lgDczR5Calkx620nzQONjGfrIU')
         
-        # Columns: Date, Activity_Type, Platform, Content_Title_Topic, Status, Link, Metric_Views, Metric_Engagement
+        # 3. Fetch Content Log
+        sheet_log = wb.worksheet("Content_Log")
+        data = sheet_log.get_all_records()
         
         activities = []
         total_views = 0
         
         for row in data:
-            if str(row.get('Status', '')).lower() == 'published':
+            # Check Status
+            status = str(row.get('Status', '')).strip()
+            if status.lower() == 'published':
+                # Parse Views
                 try:
-                    views = int(str(row.get('Metric_Views', 0)).replace(',',''))
+                    views_str = str(row.get('Metric_Views', 0)).replace(',', '')
+                    views = int(views_str) if views_str.isdigit() else 0
                 except:
                     views = 0
                 
                 total_views += views
                 
                 activities.append({
-                    "date": row.get('Date', ''),
-                    "type": row.get('Activity_Type', ''),
-                    "platform": row.get('Platform', ''),
-                    "title": row.get('Content_Title_Topic', ''),
-                    "status": row.get('Status', ''),
+                    "date": str(row.get('Date', '')),
+                    "type": str(row.get('Activity_Type', '')),
+                    "platform": str(row.get('Platform', '')),
+                    "title": str(row.get('Content_Title_Topic', '')),
+                    "status": status,
                     "views": views,
-                    "engagement": row.get('Metric_Engagement', 0),
-                    "link": row.get('Link', '#')
+                    "engagement": str(row.get('Metric_Engagement', 0)),
+                    "link": str(row.get('Link', '#'))
                 })
         
-        # Sort by Date desc (assuming date strings sortable YYYY-MM-DD, otherwise relying on sheet order)
-        # For robustness, we just take the top ones from the sheet if sorted, or sort locally
-        # activities.sort(key=lambda x: x['date'], reverse=True) 
-
-        # Fetch Health Score
-        health_sheet = client.open("Filing Buddy Content Engine & SEO Setup").worksheet("Site_Health")
-        health_score = health_sheet.acell('B2').value
-
+        # 4. Fetch Health Score
+        sheet_health = wb.worksheet("Site_Health")
+        # Assuming B2 holds the score
+        health_score_val = sheet_health.acell('B2').value
+        
         return {
-            "health_score": health_score,
+            "health_score": health_score_val,
             "total_views": total_views,
-            "activities": activities[:50] # Return up to 50 recent items
+            "activities": activities[:50] # Top 50
         }
 
     except Exception as e:
