@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, request
 from services.gsc_service import fetch_gsc_performance
-from services.ga4_service import fetch_ga4_growth
+from services.ga4_service import fetch_ga4_growth, fetch_ga4_trend
 from services.sheets_service import fetch_content_log
 import os
 
@@ -36,6 +36,17 @@ def ga4_growth():
         # but we can pass current range logic if expanded later.
         # For now, it calculates vs previous period internally.
         data = fetch_ga4_growth() 
+        return jsonify(data)
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/ga4-trend', methods=['GET'])
+def ga4_trend():
+    """Returns GA4 Daily Trend."""
+    try:
+        start = request.args.get('start')
+        end = request.args.get('end')
+        data = fetch_ga4_trend(start_date=start, end_date=end)
         return jsonify(data)
     except Exception as e:
         return jsonify({"error": str(e)}), 500

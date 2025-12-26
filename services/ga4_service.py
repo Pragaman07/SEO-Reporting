@@ -83,3 +83,50 @@ def fetch_ga4_growth(property_id='414531202'):
             'delta': calc_delta(current['avgEngagementTime'], previous['avgEngagementTime'])
         }
     }
+
+def fetch_ga4_trend(start_date=None, end_date=None):
+    """Fetches daily trend for new users and sessions (Organic Search)."""
+    creds = get_credentials()
+    client = BetaAnalyticsDataClient(credentials=creds)
+    
+    # Defaults if None
+    if not start_date or not end_date:
+        today = date.today()
+        end_date_obj = today
+        start_date_obj = today - timedelta(days=29)
+        start = start_date_obj.strftime("%Y-%m-%d")
+        end = end_date_obj.strftime("%Y-%m-%d")
+    else:
+        start = start_date
+        end = end_date
+
+    request = RunReportRequest(
+        property=f"properties/{os.environ.get('GA4_PROPERTY_ID', '315739343')}",
+        date_ranges=[DateRange(start_date=start, end_date=end)],
+        dimensions=[Dimension(name="date")],
+        metrics=[Metric(name="newUsers"), Metric(name="sessions")],
+        dimension_filter=FilterExpression(
+            filter=Filter(
+                field_name="sessionDefaultChannelGroup",
+                string_filter=Filter.StringFilter(value="Organic Search")
+            )
+        ),
+        order_bys=[OrderBy(dimension=OrderBy.DimensionOrderBy(dimension_name="date"))]
+    )
+    
+    response = client.run_report(request=request)
+    
+    trend_data = []
+    for row in response.rows:
+        # date comes as YYYYMMDD
+        raw_date = row.dimension_values[0].value
+        # Format to YYYY-MM-DD for easier JS parsing
+        formatted_date = f"{raw_date[0:4]}-{raw_date[4:6]}-{raw_date[6:8]}"
+        
+        trend_data.append({
+            "date": formatted_date,
+            "users": int(row.metric_values[0].value),
+            "sessions": int(row.metric_values[1].value)
+        })
+        
+    return trend_data

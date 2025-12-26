@@ -9,40 +9,49 @@ def fetch_content_log(spreadsheet_id='1KL7Yvnytlb_ErsfO0lgDczR5Calkx620nzQONjGfr
     service = build('sheets', 'v4', credentials=creds)
 
     try:
-        # 1. Fetch Content Log (A:H)
-        result_content = service.spreadsheets().values().get(
-            spreadsheetId=spreadsheet_id, range='Content_Log!A:H'
-        ).execute()
-        rows = result_content.get('values', [])
+        sheet = client.open("Filing Buddy Content Engine & SEO Setup").worksheet("Content_Log")
+        data = sheet.get_all_records()
         
-        # Simple processing: Filter 'Published' and sum Views (Traffic)
+        # Columns: Date, Activity_Type, Platform, Content_Title_Topic, Status, Link, Metric_Views, Metric_Engagement
+        
         activities = []
         total_views = 0
         
-        # Skip header
-        if len(rows) > 1:
-            for row in rows[1:]:
-                # Check for Publish Status (Column F -> index 5)
-                if len(row) > 5 and row[5] == 'Published':
-                    title = row[1] if len(row) > 1 else "Untitled"
-                    views = int(row[6]) if len(row) > 6 and row[6].isdigit() else 0
-                    
-                    activities.append({'title': title, 'views': views})
-                    total_views += views
+        for row in data:
+            if str(row.get('Status', '')).lower() == 'published':
+                try:
+                    views = int(str(row.get('Metric_Views', 0)).replace(',',''))
+                except:
+                    views = 0
+                
+                total_views += views
+                
+                activities.append({
+                    "date": row.get('Date', ''),
+                    "type": row.get('Activity_Type', ''),
+                    "platform": row.get('Platform', ''),
+                    "title": row.get('Content_Title_Topic', ''),
+                    "status": row.get('Status', ''),
+                    "views": views,
+                    "engagement": row.get('Metric_Engagement', 0),
+                    "link": row.get('Link', '#')
+                })
+        
+        # Sort by Date desc (assuming date strings sortable YYYY-MM-DD, otherwise relying on sheet order)
+        # For robustness, we just take the top ones from the sheet if sorted, or sort locally
+        # activities.sort(key=lambda x: x['date'], reverse=True) 
 
-        # 2. Fetch Health Score (Site_Health!A2)
-        result_health = service.spreadsheets().values().get(
-            spreadsheetId=spreadsheet_id, range='Site_Health!A2'
-        ).execute()
-        health_row = result_health.get('values', [])
-        health_score = int(health_row[0][0]) if health_row and health_row[0] else 0
+        # Fetch Health Score
+        health_sheet = client.open("Filing Buddy Content Engine & SEO Setup").worksheet("Site_Health")
+        health_score = health_sheet.acell('B2').value
 
         return {
-            'activities': activities[:5], # Return top 5
-            'total_views': total_views,
-            'health_score': health_score
+            "health_score": health_score,
+            "total_views": total_views,
+            "activities": activities[:50] # Return up to 50 recent items
         }
 
     except Exception as e:
         print(f"Sheets Error: {e}")
-        return {'activities': [], 'total_views': 0, 'health_score': 0}
+        return {"health_score": 0, "activities": [], "error": str(e)}
+```

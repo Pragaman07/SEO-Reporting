@@ -62,13 +62,41 @@
                 opacity: 1;
             }
         }
+
+        /* Table Styles */
+        .data-table {
+            width: 100%;
+            text-align: left;
+            font-size: 0.875rem;
+            border-collapse: collapse;
+        }
+
+        .data-table th {
+            background-color: #f9fafb;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            color: #6b7280;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        .data-table td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #e5e7eb;
+            color: #374151;
+        }
+
+        .data-table tr:last-child td {
+            border-bottom: none;
+        }
     </style>
 </head>
 
 <body class="flex">
 
     <!-- SIDEBAR -->
-    <aside class="sidebar w-64 flex-shrink-0 fixed top-0 left-0 h-full p-6 flex flex-col">
+    <aside class="sidebar w-64 flex-shrink-0 fixed top-0 left-0 h-full p-6 flex flex-col z-20 overflow-y-auto">
         <div class="mb-8">
             <h1 class="text-xl font-bold flex items-center gap-2">
                 <i class="ph ph-chart-line-up text-blue-400"></i> SEO Dashboard
@@ -120,7 +148,7 @@
             </div>
         </div>
 
-        <!-- SECTION 1: SCORECARDS (GSC) -->
+        <!-- SECTION 1: GSC SCORECARDS -->
         <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
             <span class="w-1 h-5 bg-blue-500 rounded-full"></span> Search Performance
         </h3>
@@ -144,7 +172,7 @@
             </div>
         </div>
 
-        <!-- SECTION 2: CHARTS (GSC) -->
+        <!-- SECTION 2: GSC CHARTS & TABLE -->
         <div class="grid grid-cols-3 gap-6 mb-8">
             <!-- Brand Split -->
             <div class="card col-span-1">
@@ -162,40 +190,73 @@
             </div>
         </div>
 
+        <!-- NEW: TOP QUERIES TABLE -->
+        <div class="card mb-8 overflow-hidden">
+            <h4 class="font-bold text-gray-700 mb-4 text-sm">Top Performing Queries</h4>
+            <div class="overflow-x-auto">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Query</th>
+                            <th>Clicks</th>
+                            <th>Impressions</th>
+                            <th>CTR</th>
+                            <th>Position</th>
+                        </tr>
+                    </thead>
+                    <tbody id="gsc-queries-body">
+                        <tr>
+                            <td colspan="5" class="text-center text-gray-400 py-4 loading-pulse">Loading queries...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
         <!-- SECTION 3: GA4 & CONTENT -->
-        <div class="grid grid-cols-2 gap-6 mb-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <!-- GA4 -->
             <div class="card">
                 <h3 class="font-bold text-gray-800 mb-4 flex items-center gap-2">
                     <span class="w-1 h-5 bg-green-500 rounded-full"></span> Organic Growth (MoM)
                 </h3>
-                <div class="space-y-6">
-                    <div class="flex justify-between items-center border-b border-gray-100 pb-4">
-                        <div>
-                            <div class="text-xs text-gray-400 uppercase font-bold">New Users</div>
-                            <div id="ga4-users" class="text-2xl font-bold text-gray-900 loading-pulse">---</div>
+
+                <!-- Metrics -->
+                <div class="grid grid-cols-3 gap-4 mb-6">
+                    <div>
+                        <div class="text-xs text-gray-400 uppercase font-bold">New Users</div>
+                        <div class="flex items-center gap-2">
+                            <span id="ga4-users" class="text-xl font-bold text-gray-900 loading-pulse">---</span>
+                            <span id="ga4-users-delta"
+                                class="text-xs font-bold bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">...</span>
                         </div>
-                        <div id="ga4-users-delta"
-                            class="text-sm font-bold bg-green-100 text-green-700 px-2 py-1 rounded">...</div>
                     </div>
-                    <div class="flex justify-between items-center border-b border-gray-100 pb-4">
-                        <div>
-                            <div class="text-xs text-gray-400 uppercase font-bold">Organic Sessions</div>
-                            <div id="ga4-sessions" class="text-2xl font-bold text-gray-900 loading-pulse">---</div>
+                    <div>
+                        <div class="text-xs text-gray-400 uppercase font-bold">Sessions</div>
+                        <div class="flex items-center gap-2">
+                            <span id="ga4-sessions" class="text-xl font-bold text-gray-900 loading-pulse">---</span>
+                            <span id="ga4-sessions-delta"
+                                class="text-xs font-bold bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">...</span>
                         </div>
-                        <div id="ga4-sessions-delta"
-                            class="text-sm font-bold bg-green-100 text-green-700 px-2 py-1 rounded">...</div>
                     </div>
-                    <div class="flex justify-between items-center">
-                        <div>
-                            <div class="text-xs text-gray-400 uppercase font-bold">Avg Engagement</div>
-                            <div id="ga4-time" class="text-2xl font-bold text-gray-900 loading-pulse">---</div>
+                    <div>
+                        <div class="text-xs text-gray-400 uppercase font-bold">Engagement</div>
+                        <div class="flex items-center gap-2">
+                            <span id="ga4-time" class="text-xl font-bold text-gray-900 loading-pulse">---</span>
+                            <span id="ga4-time-delta"
+                                class="text-xs font-bold bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">...</span>
                         </div>
-                        <div id="ga4-time-delta"
-                            class="text-sm font-bold bg-green-100 text-green-700 px-2 py-1 rounded">...</div>
                     </div>
+                </div>
+
+                <!-- NEW: Trend Chart -->
+                <h4 class="font-bold text-gray-600 mb-2 text-xs uppercase">Organic User Trend</h4>
+                <div class="h-48">
+                    <canvas id="ga4TrendChart"></canvas>
                 </div>
             </div>
 
+            <!-- Content Engine -->
             <div class="card bg-gray-50 border border-gray-200">
                 <h3 class="font-bold text-gray-800 mb-4 flex items-center gap-2">
                     <span class="w-1 h-5 bg-yellow-500 rounded-full"></span> Content Engine
@@ -207,10 +268,31 @@
                     </div>
                     <i class="ph ph-heartbeat text-4xl text-gray-300"></i>
                 </div>
-                <h4 class="text-xs font-bold text-gray-400 uppercase mb-2">Recent Activities</h4>
-                <ul id="content-list" class="space-y-2 text-sm">
-                    <li class="loading-pulse text-gray-400">Loading content...</li>
-                </ul>
+            </div>
+        </div>
+
+        <!-- NEW: FULL CONTENT TABLE -->
+        <div class="card mb-8">
+            <h4 class="font-bold text-gray-700 mb-4 text-sm">Content Published</h4>
+            <div class="overflow-x-auto">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Type</th>
+                            <th>Platform</th>
+                            <th>Title/Topic</th>
+                            <th>Status</th>
+                            <th>Views</th>
+                        </tr>
+                    </thead>
+                    <tbody id="content-table-body">
+                        <tr>
+                            <td colspan="6" class="text-center text-gray-400 py-4 loading-pulse">Loading content log...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
             </div>
         </div>
 
@@ -221,17 +303,18 @@
         const today = new Date();
         const thirtyDaysAgo = new Date();
         thirtyDaysAgo.setDate(today.getDate() - 30);
-
+        
         document.getElementById('endDate').valueAsDate = today;
         document.getElementById('startDate').valueAsDate = thirtyDaysAgo;
 
         let brandChartInstance = null;
         let rankChartInstance = null;
+        let ga4TrendInstance = null;
 
         async function loadDashboard() {
             const start = document.getElementById('startDate').value;
             const end = document.getElementById('endDate').value;
-
+            
             // Show Loading State
             document.querySelectorAll('.loading-pulse').forEach(el => el.style.opacity = '0.5');
             const badge = document.getElementById('statusBadge');
@@ -241,66 +324,111 @@
                 // 0. CHECK DEBUG STATUS FIRST
                 const debugRes = await fetch('/api/debug');
                 const debugData = await debugRes.json();
-
+                
                 if (debugData.auth_test !== "OK") {
                     throw new Error("Auth Failed: " + debugData.auth_test);
                 }
 
                 // Parallel Fetching
-                const [gscRes, ga4Res, contentRes] = await Promise.allSettled([
+                const [gscRes, ga4Res, ga4TrendRes, contentRes] = await Promise.allSettled([
                     fetch(`/api/gsc-performance?start=${start}&end=${end}`),
                     fetch(`/api/ga4-growth?start=${start}&end=${end}`),
+                    fetch(`/api/ga4-trend?start=${start}&end=${end}`),
                     fetch('/api/content-log')
                 ]);
 
                 // 1. Process GSC
                 if (gscRes.status === 'fulfilled' && gscRes.value.ok) {
                     const gscData = await gscRes.value.json();
+                    
+                    // Scorecards
                     document.getElementById('gsc-clicks').innerText = Number(gscData.totals.clicks).toLocaleString();
                     document.getElementById('gsc-imps').innerText = Number(gscData.totals.impressions).toLocaleString();
                     document.getElementById('gsc-ctr').innerText = (gscData.totals.ctr * 100).toFixed(2) + "%";
                     document.getElementById('gsc-pos').innerText = gscData.totals.position.toFixed(1);
-                    renderCharts(gscData);
+                    
+                    // Charts
+                    renderGSCCharts(gscData);
+                    
+                    // Top Queries Table
+                    const qt = document.getElementById('gsc-queries-body');
+                    qt.innerHTML = '';
+                    if(gscData.top_queries && gscData.top_queries.length > 0) {
+                        gscData.top_queries.forEach(q => {
+                            qt.innerHTML += `
+                                <tr>
+                                    <td class="font-medium">${q.query}</td>
+                                    <td>${q.clicks}</td>
+                                    <td>${q.impressions}</td>
+                                    <td>${(q.ctr * 100).toFixed(2)}%</td>
+                                    <td>${q.position.toFixed(1)}</td>
+                                </tr>
+                            `;
+                        });
+                    } else {
+                         qt.innerHTML = '<tr><td colspan="5" class="text-center py-4">No data found.</td></tr>';
+                    }
+
                 } else {
                     console.error("GSC Error", gscRes);
                     document.getElementById('gsc-clicks').innerText = "Err";
                 }
 
-                // 2. Process GA4
+                // 2. Process GA4 Metrics
                 if (ga4Res.status === 'fulfilled' && ga4Res.value.ok) {
                     const ga4Data = await ga4Res.value.json();
                     document.getElementById('ga4-users').innerText = ga4Data.newUsers.value.toLocaleString();
                     document.getElementById('ga4-sessions').innerText = ga4Data.sessions.value.toLocaleString();
                     document.getElementById('ga4-time').innerText = ga4Data.avgEngagementTime.value;
-                    // Deltas
+                    
                     const setDelta = (id, val) => {
                         const el = document.getElementById(id);
                         el.innerText = (val > 0 ? "+" : "") + val + "%";
-                        el.className = val >= 0
-                            ? "text-sm font-bold bg-green-100 text-green-700 px-2 py-1 rounded"
-                            : "text-sm font-bold bg-red-100 text-red-700 px-2 py-1 rounded";
+                        el.className = val >= 0 
+                            ? "text-xs font-bold bg-green-100 text-green-700 px-1.5 py-0.5 rounded" 
+                            : "text-xs font-bold bg-red-100 text-red-700 px-1.5 py-0.5 rounded";
                     };
                     setDelta('ga4-users-delta', ga4Data.newUsers.delta);
                     setDelta('ga4-sessions-delta', ga4Data.sessions.delta);
                     setDelta('ga4-time-delta', ga4Data.avgEngagementTime.delta);
-                } else {
-                    console.error("GA4 Error", ga4Res);
-                    document.getElementById('ga4-users').innerText = "Err";
                 }
 
-                // 3. Process Content (Sheets)
+                // 3. Process GA4 Trend
+                if (ga4TrendRes.status === 'fulfilled' && ga4TrendRes.value.ok) {
+                    const trendData = await ga4TrendRes.value.json();
+                    renderTrendChart(trendData);
+                }
+
+                // 4. Process Content (Sheets)
                 if (contentRes.status === 'fulfilled' && contentRes.value.ok) {
                     const contentData = await contentRes.value.json();
                     document.getElementById('health-score').innerText = contentData.health_score;
-                    const cList = document.getElementById('content-list');
-                    cList.innerHTML = '';
-                    contentData.activities.forEach(a => {
-                        cList.innerHTML += `<li class="flex justify-between border-b border-gray-100 pb-1"><span>${a.title}</span><span class="font-bold text-gray-500">${a.views}</span></li>`;
-                    });
+                    
+                    const cTable = document.getElementById('content-table-body');
+                    cTable.innerHTML = '';
+                    if(contentData.activities && contentData.activities.length > 0) {
+                        contentData.activities.forEach(a => {
+                            cTable.innerHTML += `
+                                <tr>
+                                    <td class="text-gray-500 text-xs">${a.date}</td>
+                                    <td><span class="bg-gray-100 text-gray-600 px-2 py-1 rounded text-xs font-semibold">${a.type}</span></td>
+                                    <td>${a.platform}</td>
+                                    <td class="font-medium">
+                                        <a href="${a.link}" target="_blank" class="hover:text-blue-600 hover:underline">
+                                            ${a.title}
+                                        </a>
+                                    </td>
+                                    <td><span class="text-green-600 font-bold text-xs uppercase">${a.status}</span></td>
+                                    <td class="font-bold">${a.views.toLocaleString()}</td>
+                                </tr>
+                            `;
+                        });
+                    } else {
+                        cTable.innerHTML = '<tr><td colspan="6" class="text-center py-4">No recent content found.</td></tr>';
+                    }
                 } else {
-                    console.error("Content Error", contentRes);
                     document.getElementById('health-score').innerText = "Err";
-                    document.getElementById('content-list').innerHTML = '<li class="text-red-500">Error loading content.</li>';
+                    document.getElementById('content-table-body').innerHTML = '<tr><td colspan="6" class="text-red-500 text-center">Error loading content.</td></tr>';
                 }
 
                 // Clear Loading
@@ -313,8 +441,7 @@
                 console.error(err);
                 badge.classList.remove('hidden');
                 badge.classList.add('flex');
-
-                // Friendly Error Messages
+                
                 if (err.message.includes("Auth Failed")) {
                     document.getElementById('statusMsg').innerText = "Auth Error: Check Vercel Env Vars";
                 } else {
@@ -323,7 +450,7 @@
             }
         }
 
-        function renderCharts(gscData) {
+        function renderGSCCharts(gscData) {
             // Brand Chart
             if (brandChartInstance) brandChartInstance.destroy();
             brandChartInstance = new Chart(document.getElementById('brandChart'), {
@@ -353,10 +480,50 @@
                         borderRadius: 4
                     }]
                 },
+                options: { 
+                    maintainAspectRatio: false, 
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, grid: { display:false } }, x: { grid: { display:false } } }
+                }
+            });
+        }
+
+        function renderTrendChart(data) {
+            if (ga4TrendInstance) ga4TrendInstance.destroy();
+            
+            const labels = data.map(d => d.date);
+            const users = data.map(d => d.users);
+            
+            const ctx = document.getElementById('ga4TrendChart');
+            
+            // Gradient Fill
+            const gradient = ctx.getContext('2d').createLinearGradient(0, 0, 0, 200);
+            gradient.addColorStop(0, 'rgba(34, 197, 94, 0.5)'); // Green-500
+            gradient.addColorStop(1, 'rgba(34, 197, 94, 0.0)');
+
+            ga4TrendInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'New Organic Users',
+                        data: users,
+                        borderColor: '#22c55e', // Green-500
+                        backgroundColor: gradient,
+                        borderWidth: 2,
+                        pointRadius: 2,
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
                 options: {
                     maintainAspectRatio: false,
                     plugins: { legend: { display: false } },
-                    scales: { y: { beginAtZero: true, grid: { display: false } }, x: { grid: { display: false } } }
+                    scales: {
+                        x: { display: false },
+                        y: { display: false, beginAtZero: true }
+                    },
+                    interaction: { mode: 'index', intersect: false }
                 }
             });
         }
