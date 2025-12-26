@@ -4,327 +4,341 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SEO Report Builder</title>
+    <title>SEO Dashboard</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Phosphor Icons -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
         body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: #f3f5f8;
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
         }
 
-        .a4-page {
-            width: 210mm;
-            min-height: 297mm;
-            background: white;
-            margin: 40px auto;
-            padding: 20mm;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            position: relative;
-            overflow: hidden;
+        .sidebar {
+            background-color: #1f2937;
+            color: white;
+            min-height: 100vh;
         }
 
-        @media print {
-            body {
-                background: white;
-                margin: 0;
-            }
-
-            .a4-page {
-                margin: 0;
-                box-shadow: none;
-                width: 100%;
-                padding: 0;
-                min-height: auto;
-            }
-
-            .no-print {
-                display: none !important;
-            }
-
-            .page-break {
-                page-break-before: always;
-                margin-top: 2rem;
-            }
+        .card {
+            background-color: white;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
         }
 
-        .loading {
-            color: #cbd5e1;
-            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        .metric-value {
+            font-size: 1.875rem;
+            font-weight: 700;
+            color: #111827;
+        }
+
+        .metric-label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #6b7280;
+            text-transform: uppercase;
+        }
+
+        .loading-pulse {
+            animation: pulse 2s infinite;
         }
 
         @keyframes pulse {
-
-            0%,
-            100% {
+            0% {
                 opacity: 1;
             }
 
             50% {
-                opacity: .5;
+                opacity: 0.5;
+            }
+
+            100% {
+                opacity: 1;
             }
         }
     </style>
 </head>
 
-<body>
+<body class="flex">
 
-    <!-- CONTROL PANEL -->
-    <div
-        class="fixed top-0 left-0 w-full bg-gray-900 text-white p-4 z-50 flex justify-between items-center shadow-lg no-print">
-        <div class="flex items-center gap-4">
-            <h1 class="font-bold text-lg">Report Builder (Vercel Edition)</h1>
-            <span id="status" class="text-xs bg-yellow-600 px-2 py-1 rounded">Fetching Data...</span>
+    <!-- SIDEBAR -->
+    <aside class="sidebar w-64 flex-shrink-0 fixed top-0 left-0 h-full p-6 flex flex-col">
+        <div class="mb-8">
+            <h1 class="text-xl font-bold flex items-center gap-2">
+                <i class="ph ph-chart-line-up text-blue-400"></i> SEO Dashboard
+            </h1>
+            <p class="text-xs text-gray-400 mt-1">Client: Filing Buddy</p>
         </div>
-        <button onclick="window.print()"
-            class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 transition">
-            <i class="ph ph-printer"></i> Save PDF
-        </button>
-    </div>
 
-    <div class="h-20 no-print"></div>
+        <div class="mb-8">
+            <h2 class="text-sm font-bold text-gray-400 uppercase mb-4">Filters</h2>
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">Start Date</label>
+                    <input type="date" id="startDate"
+                        class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500">
+                </div>
+                <div>
+                    <label class="block text-xs text-gray-400 mb-1">End Date</label>
+                    <input type="date" id="endDate"
+                        class="w-full bg-gray-800 border border-gray-700 rounded px-3 py-2 text-sm focus:outline-none focus:border-blue-500">
+                </div>
+                <button onclick="loadDashboard()"
+                    class="w-full bg-blue-600 hover:bg-blue-500 text-white py-2 rounded text-sm font-semibold transition">
+                    Apply Filters
+                </button>
+            </div>
+        </div>
 
-    <!-- REPORT PAGE 1 -->
-    <div class="a4-page">
-        <!-- Header -->
-        <header class="flex justify-between items-end border-b-2 border-gray-100 pb-6 mb-8">
+        <div class="mt-auto">
+            <a href="/report.html" target="_blank"
+                class="block w-full bg-gray-800 hover:bg-gray-700 text-center py-2 rounded text-sm font-medium transition border border-gray-700 text-gray-300">
+                <i class="ph ph-file-text mr-1"></i> Open Report Builder
+            </a>
+            <p class="text-xs text-center text-gray-500 mt-4">Powered by Vercel</p>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-1 ml-64 p-8">
+
+        <!-- HEADER -->
+        <div class="flex justify-between items-center mb-8">
             <div>
-                <img src="https://via.placeholder.com/150x50?text=CLIENT+LOGO" alt="Logo" class="h-12 mb-4 opacity-80">
-                <h1 class="text-4xl font-bold text-gray-900" contenteditable="true">SEO Performance Report</h1>
-                <p class="text-gray-500 mt-1" contenteditable="true">Generated via Vercel Functions</p>
+                <h2 class="text-2xl font-bold text-gray-900">Executive Overview</h2>
+                <p class="text-gray-500 text-sm mt-1">Real-time performance metrics from GSC & GA4</p>
             </div>
-            <div class="text-right">
-                <div class="text-sm font-semibold text-gray-400 uppercase tracking-wider">Prepared By</div>
-                <div class="text-lg font-bold text-gray-800" contenteditable="true">Filing Buddy Agency</div>
+            <div id="statusBadge"
+                class="hidden px-3 py-1 bg-red-100 text-red-700 rounded-full text-xs font-bold items-center gap-2">
+                <i class="ph ph-warning-circle"></i> <span id="statusMsg">Error</span>
             </div>
-        </header>
+        </div>
 
-        <!-- Executive Summary -->
-        <section class="mb-10">
-            <h2 class="text-sm font-bold text-blue-600 uppercase tracking-wide mb-3 flex items-center gap-2">
-                <i class="ph ph-sparkle"></i> Executive Summary
-            </h2>
-            <div class="bg-blue-50 p-6 rounded-2xl border border-blue-100">
-                <p class="text-gray-700 leading-relaxed text-lg" contenteditable="true">
-                    This month showed <strong id="summary-new-users">...</strong> new organic users finding the site.
-                    Search visibility is strong with <strong id="summary-clicks">...</strong> clicks.
-                    <br><br>
-                    (Edit this summary to add qualitative insights).
-                </p>
-            </div>
-        </section>
+        <!-- SECTION 1: SCORECARDS (GSC) -->
+        <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
+            <span class="w-1 h-5 bg-blue-500 rounded-full"></span> Search Performance
+        </h3>
 
-        <!-- MODULE 1: GA4 -->
-        <section class="mb-8">
-            <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                <span class="w-1.5 h-6 bg-green-500 rounded-full"></span>
-                Google Analytics 4: User Growth
-            </h2>
-            <div class="grid grid-cols-3 gap-4 mb-6">
-                <!-- New Users -->
-                <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-                    <p class="text-xs font-bold text-gray-400 uppercase">New Organic Users</p>
-                    <div id="ga4-new-users" class="text-3xl font-bold text-gray-900 mt-1 loading">---</div>
-                    <div id="ga4-new-users-delta" class="text-xs font-bold mt-1">...</div>
-                </div>
-                <!-- Sessions -->
-                <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-                    <p class="text-xs font-bold text-gray-400 uppercase">Organic Sessions</p>
-                    <div id="ga4-sessions" class="text-3xl font-bold text-gray-900 mt-1 loading">---</div>
-                    <div id="ga4-sessions-delta" class="text-xs font-bold mt-1">...</div>
-                </div>
-                <!-- Engagement -->
-                <div class="bg-white p-4 rounded-xl border border-gray-200 shadow-sm">
-                    <p class="text-xs font-bold text-gray-400 uppercase">Avg Engagement Time</p>
-                    <div id="ga4-engagement" class="text-3xl font-bold text-gray-900 mt-1 loading">---</div>
-                    <div id="ga4-engagement-delta" class="text-xs font-bold mt-1">...</div>
+        <div class="grid grid-cols-4 gap-6 mb-8">
+            <div class="card">
+                <div class="metric-label">Total Clicks</div>
+                <div id="gsc-clicks" class="metric-value loading-pulse">---</div>
+            </div>
+            <div class="card">
+                <div class="metric-label">Total Impressions</div>
+                <div id="gsc-imps" class="metric-value loading-pulse">---</div>
+            </div>
+            <div class="card">
+                <div class="metric-label">Avg CTR</div>
+                <div id="gsc-ctr" class="metric-value loading-pulse">---</div>
+            </div>
+            <div class="card">
+                <div class="metric-label">Avg Position</div>
+                <div id="gsc-pos" class="metric-value loading-pulse">---</div>
+            </div>
+        </div>
+
+        <!-- SECTION 2: CHARTS (GSC) -->
+        <div class="grid grid-cols-3 gap-6 mb-8">
+            <!-- Brand Split -->
+            <div class="card col-span-1">
+                <h4 class="font-bold text-gray-700 mb-4 text-sm">Branded vs Non-Branded</h4>
+                <div class="h-48">
+                    <canvas id="brandChart"></canvas>
                 </div>
             </div>
-        </section>
-
-        <!-- MODULE 2: GSC -->
-        <section class="mb-8">
-            <h2 class="text-lg font-bold text-gray-800 mb-4 flex items-center gap-2">
-                <span class="w-1.5 h-6 bg-blue-500 rounded-full"></span>
-                Google Search Console: Visibility
-            </h2>
-            <!-- Scorecards -->
-            <div class="grid grid-cols-4 gap-4 mb-6">
-                <div class="bg-blue-50 p-4 rounded-xl border border-blue-100">
-                    <p class="text-xs font-bold text-blue-400 uppercase">Clicks</p>
-                    <div id="gsc-clicks" class="text-3xl font-bold text-blue-900 mt-1 loading">---</div>
-                </div>
-                <div class="bg-blue-50 p-4 rounded-xl border border-blue-100">
-                    <p class="text-xs font-bold text-blue-400 uppercase">Impressions</p>
-                    <div id="gsc-imps" class="text-3xl font-bold text-blue-900 mt-1 loading">---</div>
-                </div>
-                <div class="bg-blue-50 p-4 rounded-xl border border-blue-100">
-                    <p class="text-xs font-bold text-blue-400 uppercase">CTR</p>
-                    <div id="gsc-ctr" class="text-3xl font-bold text-blue-900 mt-1 loading">---</div>
-                </div>
-                <div class="bg-blue-50 p-4 rounded-xl border border-blue-100">
-                    <p class="text-xs font-bold text-blue-400 uppercase">Avg Pos</p>
-                    <div id="gsc-pos" class="text-3xl font-bold text-blue-900 mt-1 loading">---</div>
+            <!-- Ranking Dist -->
+            <div class="card col-span-2">
+                <h4 class="font-bold text-gray-700 mb-4 text-sm">Keyword Ranking Distribution</h4>
+                <div class="h-48">
+                    <canvas id="rankChart"></canvas>
                 </div>
             </div>
+        </div>
 
-            <!-- Visuals -->
-            <div class="grid grid-cols-2 gap-6 mb-8">
-                <!-- Brand Split -->
-                <div class="bg-white p-5 rounded-xl border border-gray-200">
-                    <h3 class="text-sm font-bold text-gray-600 mb-2">Query Type</h3>
-                    <div class="flex items-center gap-6">
-                        <div class="h-40 w-40">
-                            <canvas id="brandPieChart"></canvas>
+        <!-- SECTION 3: GA4 & CONTENT -->
+        <div class="grid grid-cols-2 gap-6 mb-8">
+            <div class="card">
+                <h3 class="font-bold text-gray-800 mb-4 flex items-center gap-2">
+                    <span class="w-1 h-5 bg-green-500 rounded-full"></span> Organic Growth (MoM)
+                </h3>
+                <div class="space-y-6">
+                    <div class="flex justify-between items-center border-b border-gray-100 pb-4">
+                        <div>
+                            <div class="text-xs text-gray-400 uppercase font-bold">New Users</div>
+                            <div id="ga4-users" class="text-2xl font-bold text-gray-900 loading-pulse">---</div>
                         </div>
-                        <div class="space-y-3 flex-1">
-                            <div>
-                                <div class="text-xs text-gray-400 uppercase">Non-Branded</div>
-                                <div id="non-brand-share" class="text-xl font-bold text-blue-600">---%</div>
-                            </div>
-                            <div>
-                                <div class="text-xs text-gray-400 uppercase">Branded</div>
-                                <div id="brand-share" class="text-xl font-bold text-gray-600">---%</div>
-                            </div>
+                        <div id="ga4-users-delta"
+                            class="text-sm font-bold bg-green-100 text-green-700 px-2 py-1 rounded">...</div>
+                    </div>
+                    <div class="flex justify-between items-center border-b border-gray-100 pb-4">
+                        <div>
+                            <div class="text-xs text-gray-400 uppercase font-bold">Organic Sessions</div>
+                            <div id="ga4-sessions" class="text-2xl font-bold text-gray-900 loading-pulse">---</div>
                         </div>
+                        <div id="ga4-sessions-delta"
+                            class="text-sm font-bold bg-green-100 text-green-700 px-2 py-1 rounded">...</div>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <div class="text-xs text-gray-400 uppercase font-bold">Avg Engagement</div>
+                            <div id="ga4-time" class="text-2xl font-bold text-gray-900 loading-pulse">---</div>
+                        </div>
+                        <div id="ga4-time-delta"
+                            class="text-sm font-bold bg-green-100 text-green-700 px-2 py-1 rounded">...</div>
                     </div>
                 </div>
-                <!-- Top Keywords -->
-                <div class="bg-white p-5 rounded-xl border border-gray-200">
-                    <h3 class="text-sm font-bold text-gray-600 mb-2">Top Performing Keywords</h3>
-                    <ul id="top-keywords-list" class="text-sm space-y-2 text-gray-700">
-                        <li class="loading">Loading queries...</li>
-                    </ul>
-                </div>
             </div>
-        </section>
 
-        <!-- MODULE 3: CONTENT & HEALTH -->
-        <section class="grid grid-cols-3 gap-6">
-            <div class="col-span-1 bg-gray-900 text-white p-5 rounded-xl flex flex-col justify-between">
-                <div>
-                    <p class="text-xs font-bold text-gray-400 uppercase">Site Health Score</p>
-                    <div id="health-score" class="text-5xl font-bold mt-2 loading">--</div>
+            <div class="card bg-gray-50 border border-gray-200">
+                <h3 class="font-bold text-gray-800 mb-4 flex items-center gap-2">
+                    <span class="w-1 h-5 bg-yellow-500 rounded-full"></span> Content Engine
+                </h3>
+                <div class="bg-white p-4 rounded-lg border border-gray-200 mb-4 flex items-center justify-between">
+                    <div>
+                        <div class="text-xs text-gray-400 uppercase font-bold">Site Health Score</div>
+                        <div id="health-score" class="text-3xl font-bold text-gray-900 mt-1 loading-pulse">--</div>
+                    </div>
+                    <i class="ph ph-heartbeat text-4xl text-gray-300"></i>
                 </div>
-            </div>
-            <div class="col-span-2 bg-white border border-gray-200 rounded-xl p-5">
-                <h3 class="text-sm font-bold text-gray-600 mb-3 uppercase">Activities Log</h3>
-                <ul id="activity-log" class="space-y-3 text-sm">
-                    <li class="loading">Loading activity...</li>
+                <h4 class="text-xs font-bold text-gray-400 uppercase mb-2">Recent Activities</h4>
+                <ul id="content-list" class="space-y-2 text-sm">
+                    <li class="loading-pulse text-gray-400">Loading content...</li>
                 </ul>
             </div>
-        </section>
+        </div>
 
-    </div>
+    </main>
 
-    <!-- JAVASCRIPT LOGIC -->
     <script>
-        async function fetchReportData() {
-            const statusBadge = document.getElementById('status');
+        // Init Dates
+        const today = new Date();
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgoay.getDate() - 30);
+        
+        document.getElementById('endDate').valueAsDate = today;
+        document.getElementById('startDate').valueAsDate = thirtyDaysAgo;
+
+    rtInstance = null;
+        let rankChartInstance = null;
+
+        async function loadDashboard() {
+            const start = document.getElementById('startDate').value;
+            const end = document.getElementById('endDate').value;
+            
+            // Show Loading State
+            document.querySelectorAll('.loading-pulse').forEach(el => el.style.opacity = '0.5');
+            document.getElementById('statusBadge').classList.add('hidden');
 
             try {
-                // 1. Fetch GA4 Data
-                const ga4Res = await fetch('/api/ga4-growth');
-                const ga4Data = await ga4Res.json();
-
-                // Helper for Delta Colors
-                const setDelta = (id, val) => {
-                    const el = document.getElementById(id);
-                    el.innerText = (val > 0 ? "▲ " : "▼ ") + Math.abs(val) + "% vs last month";
-                    el.className = val > 0 ? "text-xs font-bold mt-1 text-green-600" : "text-xs font-bold mt-1 text-red-500";
-                };
-
-                document.getElementById('ga4-new-users').innerText = ga4Data.newUsers.value.toLocaleString();
-                document.getElementById('ga4-new-users').classList.remove('loading');
-                setDelta('ga4-new-users-delta', ga4Data.newUsers.delta);
-
-                document.getElementById('ga4-sessions').innerText = ga4Data.sessions.value.toLocaleString();
-                document.getElementById('ga4-sessions').classList.remove('loading');
-                setDelta('ga4-sessions-delta', ga4Data.sessions.delta);
-
-                document.getElementById('ga4-engagement').innerText = ga4Data.avgEngagementTime.value;
-                document.getElementById('ga4-engagement').classList.remove('loading');
-                setDelta('ga4-engagement-delta', ga4Data.avgEngagementTime.delta);
-
-                // Summary Injection
-                document.getElementById('summary-new-users').innerText = ga4Data.newUsers.value.toLocaleString();
-
-
-                // 2. Fetch GSC Data
-                const gscRes = await fetch('/api/gsc-performance');
+                // 1. Fetch GSC
+                const gscRes = await fetch(`/api/gsc-performance?start=${start}&end=${end}`);
+                if (!gscRes.ok) throw new Error('Failed to fetch GSC data');
                 const gscData = await gscRes.json();
 
-                // Totals
-                document.getElementById('gsc-clicks').innerText = Number(gscData.totals.clicks).toLocaleString();
-                document.getElementById('gsc-clicks').classList.remove('loading');
-                document.getElementById('summary-clicks').innerText = Number(gscData.totals.clicks).toLocaleString();
+                // 2. Fetch GA4
+                const ga4Res = await fetch(`/api/ga4-growth?start=${start}&end=${end}`);
+                 if (!ga4Res.ok) throw new Error('Failed to fetch GA4 data');
+const ga4Data = await ga4Res.json();
 
-                document.getElementById('gsc-imps').innerText = Number(gscData.totals.impressions).toLocaleString();
-                document.getElementById('gsc-imps').classList.remove('loading');
-
-                document.getElementById('gsc-ctr').innerText = (gscData.totals.ctr * 100).toFixed(2) + "%";
-                document.getElementById('gsc-ctr').classList.remove('loading');
-
-                document.getElementById('gsc-pos').innerText = gscData.totals.position.toFixed(1);
-                document.getElementById('gsc-pos').classList.remove('loading');
-
-                // Brand Split
-                document.getElementById('non-brand-share').innerText = gscData.brand_split.non_branded_share + "%";
-                document.getElementById('brand-share').innerText = gscData.brand_split.branded_share + "%";
-
-                new Chart(document.getElementById('brandPieChart'), {
-                    type: 'doughnut',
-                    data: {
-                        labels: ['Non-Branded', 'Branded'],
-                        datasets: [{
-                            data: [gscData.brand_split.non_branded_share, gscData.brand_split.branded_share],
-                            backgroundColor: ['#3b82f6', '#e5e7eb'],
-                            borderWidth: 0
-                        }]
-                    },
-                    options: { maintainAspectRatio: false, cutout: '70%', plugins: { legend: { display: false } } }
-                });
-
-                // Top Keywords List
-                const kwList = document.getElementById('top-keywords-list');
-                kwList.innerHTML = '';
-                gscData.top_queries.forEach(q => {
-                    kwList.innerHTML += `<li class="flex justify-between border-b border-gray-50 pb-1"><span>${q.query}</span><span class="font-bold">${q.clicks} clicks</span></li>`;
-                });
-
-
-                // 3. Fetch Content Data
-                const contentRes = await fetch('/api/content-log');
+                // 3. Fetch Content
+                const contentRes = await fetch('/api/content-log'); // No date filter support yet on sheets service
                 const contentData = await contentRes.json();
 
-                document.getElementById('health-score').innerText = contentData.health_score;
-                document.getElementById('health-score').classList.remove('loading');
+                // ---
+                // GSC Scorecards
+                document.getElementById('gsc-clicks').innerText = Number(gscData.totals.clicks).toLocaleString();
+                document.getElementById('gsc-imps').innerText = Number(gscData.totals.impressions).toLocaleString();
+                document.getElementById('gsc-c (gscData.totals.ctr * 100).toFixed(2) + "%";
+                document.getElementById('gsc-pos').innerText = gscData.totals.position.toFixed(1);
 
-                const actList = document.getElementById('activity-log');
-                actList.innerHTML = '';
+                // GA4 Metrics
+                document.getElementById('ga4-users').innerText = ga4Data.newUsers.value.toLocaleString();
+                document.getElementById('ga4-sessions').inn.sessions.value.toLocaleString();
+                document.getElementById('ga4-time').innerText = ga4Data.avgEngagementTime.value;
+
+                const setDelta = (id, val) => {
+                   ment.getElementById(id);
+                    el.innerText = (val > 0 ? "+" : "") + val + "%";
+                    el.className = val >= 0 
+                        ? "text-sm font-bold bg-gren-700 px-2 py-1 rounded" 
+                        : "text-sm font-bold bg-red-100 text-red-700 px-2 py-1 rounded";
+                };
+                setDelta('ga4-users-delta', ga4Data.newUsers.delta);
+                setDelta('ga4-sessions-delta', ga4Data.sessions.delta);
+                setDelta('ga4-time-delta', ga4Data.avgEngagementTime.delta);
+
+                // Content
+                document.getElementById('health-score')tentData.health_score;
+                const cList = document.getElementById('content-list');
+                cList.innerHTML = '';
                 contentData.activities.forEach(a => {
-                    actList.innerHTML += `<li class="flex justify-between border-b border-gray-50 pb-2"><span>📝 ${a.title}</span><span class="font-bold text-gray-700">${a.views} Views</span></li>`;
+                    cList.innerHTML += `<li class="flex justify-between border-b border-gray-100 pb-1"><span>${a.title}</span><span class="font-bold text-gray-500">${a.views}</span></li>`;
                 });
 
-                statusBadge.innerText = "Data Loaded";
-                statusBadge.className = "text-xs bg-green-600 px-2 py-1 rounded";
+                // Charts
+                renderCharts(gscData);
 
-            } catch (error) {
-                console.error(error);
-                statusBadge.innerText = "Error Loading Data";
-                statusBadge.className = "text-xs bg-red-600 px-2 py-1 rounded";
+                // Clear Loading
+                document.querySelectorAll('.loading-pulse').forEach(el => {
+                    el.classList.remove('loading-pulse');
+                    el.style.opacity = '1';
+                });
+
+            } catch (err) {
+                console.error(err);
+                const badge = document.getElementById('statusBadge');
+                badge.classList.remove('hidden');
+                badge.classList.add('flex');
+                document.getElementById('statusMsg').innerText = "Check Connection / Credentials";
             }
         }
 
-        // Initialize
-        window.onload = fetchReportData;
+        function renderCharts(gscData) {
+            // Brand Chart
+            if (brandChartInstance) brandChartInstance.destroy();
+            brandChartInstance = new Chart(document.getElementById('brandChart'), {
+                type: 'doughnut',
+                data: {
+                    labels: ['Non-Branded', 'Branded'],
+                    dat                  data: [gscData.brand_split.non_branded_share, gscData.brand_split.branded_share],
+                        backgroundColor: ['#3b82f6', '#e5e7eb'],
+                        borderWidth: 0
+                    }]
+                },
+                options: { maintainAspectRatio: false, cutout: '70%', plugins: { legend: { position: 'right' } } }
+            });
+
+            // Rank Chart
+            if (rankChartInstance) rankChartInstance.destroy();
+            const buckets = gscData.buckets;
+            rankChartInstance = new Chart(document.getElementById('rankChart'), {
+                type: 'bar',
+                data: {
+                    labels: ['Top 10', '11-20', '21-50', '51+'],
+                    datasets: [{
+                        label: 'Keywords',
+                        data: [buck'1-uckets['11-20'], buckets['21-50'], buckets['51-100']],
+                        backgroundColor: '#3b82f6',
+                        borderRadius: 4
+                    }]
+                },
+                options: { 
+                    maintainAspectRatio: false, 
+                    plugins: { legend: { display: false } },
+                    scales: { y: { beginAtZero: true, grid: { display:false } }, x: { grid: { display:false } } }
+                }
+            });
+        }
+
+        // Auto Load
+        window.onload = loadDashboard;
     </script>
 </body>
 

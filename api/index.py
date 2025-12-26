@@ -21,7 +21,9 @@ def not_found(error):
 def gsc_performance():
     """Returns GSC Query Stats, Brand Split, and Rank Buckets."""
     try:
-        data = fetch_gsc_performance()
+        start = request.args.get('start')
+        end = request.args.get('end')
+        data = fetch_gsc_performance(start_date=start, end_date=end)
         return jsonify(data)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -30,7 +32,10 @@ def gsc_performance():
 def ga4_growth():
     """Returns GA4 Metric Growth (MoM)."""
     try:
-        data = fetch_ga4_growth()
+        # GA4 Service creates its own comparison dates based on reference date, 
+        # but we can pass current range logic if expanded later.
+        # For now, it calculates vs previous period internally.
+        data = fetch_ga4_growth() 
         return jsonify(data)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
