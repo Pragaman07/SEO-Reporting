@@ -1,4 +1,5 @@
 from datetime import date, timedelta
+import os
 from google.analytics.data_v1beta import BetaAnalyticsDataClient
 from google.analytics.data_v1beta.types import (
     DateRange,
@@ -6,7 +7,9 @@ from google.analytics.data_v1beta.types import (
     Metric,
     RunReportRequest,
     FilterExpression,
-    Filter
+    Filter,
+    OrderBy
+)
 )
 from .auth import get_credentials
 
