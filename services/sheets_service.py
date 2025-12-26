@@ -54,4 +54,3 @@ def fetch_content_log(spreadsheet_id='1KL7Yvnytlb_ErsfO0lgDczR5Calkx620nzQONjGfr
     except Exception as e:
         print(f"Sheets Error: {e}")
         return {"health_score": 0, "activities": [], "error": str(e)}
-```
