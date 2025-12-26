@@ -10,7 +10,6 @@ from google.analytics.data_v1beta.types import (
     Filter,
     OrderBy
 )
-)
 from .auth import get_credentials
 
 def fetch_ga4_growth(property_id='414531202'):
