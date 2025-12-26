@@ -220,70 +220,88 @@
         // Init Dates
         const today = new Date();
         const thirtyDaysAgo = new Date();
-        thirtyDaysAgoay.getDate() - 30);
-        
+        thirtyDaysAgo.setDate(today.getDate() - 30);
+
         document.getElementById('endDate').valueAsDate = today;
         document.getElementById('startDate').valueAsDate = thirtyDaysAgo;
 
-    rtInstance = null;
+        let brandChartInstance = null;
         let rankChartInstance = null;
 
         async function loadDashboard() {
             const start = document.getElementById('startDate').value;
             const end = document.getElementById('endDate').value;
-            
+
             // Show Loading State
             document.querySelectorAll('.loading-pulse').forEach(el => el.style.opacity = '0.5');
-            document.getElementById('statusBadge').classList.add('hidden');
+            const badge = document.getElementById('statusBadge');
+            badge.classList.add('hidden');
 
             try {
-                // 1. Fetch GSC
-                const gscRes = await fetch(`/api/gsc-performance?start=${start}&end=${end}`);
-                if (!gscRes.ok) throw new Error('Failed to fetch GSC data');
-                const gscData = await gscRes.json();
+                // 0. CHECK DEBUG STATUS FIRST
+                const debugRes = await fetch('/api/debug');
+                const debugData = await debugRes.json();
 
-                // 2. Fetch GA4
-                const ga4Res = await fetch(`/api/ga4-growth?start=${start}&end=${end}`);
-                 if (!ga4Res.ok) throw new Error('Failed to fetch GA4 data');
-const ga4Data = await ga4Res.json();
+                if (debugData.auth_test !== "OK") {
+                    throw new Error("Auth Failed: " + debugData.auth_test);
+                }
 
-                // 3. Fetch Content
-                const contentRes = await fetch('/api/content-log'); // No date filter support yet on sheets service
-                const contentData = await contentRes.json();
+                // Parallel Fetching
+                const [gscRes, ga4Res, contentRes] = await Promise.allSettled([
+                    fetch(`/api/gsc-performance?start=${start}&end=${end}`),
+                    fetch(`/api/ga4-growth?start=${start}&end=${end}`),
+                    fetch('/api/content-log')
+                ]);
 
-                // ---
-                // GSC Scorecards
-                document.getElementById('gsc-clicks').innerText = Number(gscData.totals.clicks).toLocaleString();
-                document.getElementById('gsc-imps').innerText = Number(gscData.totals.impressions).toLocaleString();
-                document.getElementById('gsc-c (gscData.totals.ctr * 100).toFixed(2) + "%";
-                document.getElementById('gsc-pos').innerText = gscData.totals.position.toFixed(1);
+                // 1. Process GSC
+                if (gscRes.status === 'fulfilled' && gscRes.value.ok) {
+                    const gscData = await gscRes.value.json();
+                    document.getElementById('gsc-clicks').innerText = Number(gscData.totals.clicks).toLocaleString();
+                    document.getElementById('gsc-imps').innerText = Number(gscData.totals.impressions).toLocaleString();
+                    document.getElementById('gsc-ctr').innerText = (gscData.totals.ctr * 100).toFixed(2) + "%";
+                    document.getElementById('gsc-pos').innerText = gscData.totals.position.toFixed(1);
+                    renderCharts(gscData);
+                } else {
+                    console.error("GSC Error", gscRes);
+                    document.getElementById('gsc-clicks').innerText = "Err";
+                }
 
-                // GA4 Metrics
-                document.getElementById('ga4-users').innerText = ga4Data.newUsers.value.toLocaleString();
-                document.getElementById('ga4-sessions').inn.sessions.value.toLocaleString();
-                document.getElementById('ga4-time').innerText = ga4Data.avgEngagementTime.value;
+                // 2. Process GA4
+                if (ga4Res.status === 'fulfilled' && ga4Res.value.ok) {
+                    const ga4Data = await ga4Res.value.json();
+                    document.getElementById('ga4-users').innerText = ga4Data.newUsers.value.toLocaleString();
+                    document.getElementById('ga4-sessions').innerText = ga4Data.sessions.value.toLocaleString();
+                    document.getElementById('ga4-time').innerText = ga4Data.avgEngagementTime.value;
+                    // Deltas
+                    const setDelta = (id, val) => {
+                        const el = document.getElementById(id);
+                        el.innerText = (val > 0 ? "+" : "") + val + "%";
+                        el.className = val >= 0
+                            ? "text-sm font-bold bg-green-100 text-green-700 px-2 py-1 rounded"
+                            : "text-sm font-bold bg-red-100 text-red-700 px-2 py-1 rounded";
+                    };
+                    setDelta('ga4-users-delta', ga4Data.newUsers.delta);
+                    setDelta('ga4-sessions-delta', ga4Data.sessions.delta);
+                    setDelta('ga4-time-delta', ga4Data.avgEngagementTime.delta);
+                } else {
+                    console.error("GA4 Error", ga4Res);
+                    document.getElementById('ga4-users').innerText = "Err";
+                }
 
-                const setDelta = (id, val) => {
-                   ment.getElementById(id);
-                    el.innerText = (val > 0 ? "+" : "") + val + "%";
-                    el.className = val >= 0 
-                        ? "text-sm font-bold bg-gren-700 px-2 py-1 rounded" 
-                        : "text-sm font-bold bg-red-100 text-red-700 px-2 py-1 rounded";
-                };
-                setDelta('ga4-users-delta', ga4Data.newUsers.delta);
-                setDelta('ga4-sessions-delta', ga4Data.sessions.delta);
-                setDelta('ga4-time-delta', ga4Data.avgEngagementTime.delta);
-
-                // Content
-                document.getElementById('health-score')tentData.health_score;
-                const cList = document.getElementById('content-list');
-                cList.innerHTML = '';
-                contentData.activities.forEach(a => {
-                    cList.innerHTML += `<li class="flex justify-between border-b border-gray-100 pb-1"><span>${a.title}</span><span class="font-bold text-gray-500">${a.views}</span></li>`;
-                });
-
-                // Charts
-                renderCharts(gscData);
+                // 3. Process Content (Sheets)
+                if (contentRes.status === 'fulfilled' && contentRes.value.ok) {
+                    const contentData = await contentRes.value.json();
+                    document.getElementById('health-score').innerText = contentData.health_score;
+                    const cList = document.getElementById('content-list');
+                    cList.innerHTML = '';
+                    contentData.activities.forEach(a => {
+                        cList.innerHTML += `<li class="flex justify-between border-b border-gray-100 pb-1"><span>${a.title}</span><span class="font-bold text-gray-500">${a.views}</span></li>`;
+                    });
+                } else {
+                    console.error("Content Error", contentRes);
+                    document.getElementById('health-score').innerText = "Err";
+                    document.getElementById('content-list').innerHTML = '<li class="text-red-500">Error loading content.</li>';
+                }
 
                 // Clear Loading
                 document.querySelectorAll('.loading-pulse').forEach(el => {
@@ -293,10 +311,15 @@ const ga4Data = await ga4Res.json();
 
             } catch (err) {
                 console.error(err);
-                const badge = document.getElementById('statusBadge');
                 badge.classList.remove('hidden');
                 badge.classList.add('flex');
-                document.getElementById('statusMsg').innerText = "Check Connection / Credentials";
+
+                // Friendly Error Messages
+                if (err.message.includes("Auth Failed")) {
+                    document.getElementById('statusMsg').innerText = "Auth Error: Check Vercel Env Vars";
+                } else {
+                    document.getElementById('statusMsg').innerText = "Connection Error (Check Console)";
+                }
             }
         }
 
@@ -307,7 +330,8 @@ const ga4Data = await ga4Res.json();
                 type: 'doughnut',
                 data: {
                     labels: ['Non-Branded', 'Branded'],
-                    dat                  data: [gscData.brand_split.non_branded_share, gscData.brand_split.branded_share],
+                    datasets: [{
+                        data: [gscData.brand_split.non_branded_share, gscData.brand_split.branded_share],
                         backgroundColor: ['#3b82f6', '#e5e7eb'],
                         borderWidth: 0
                     }]
@@ -324,15 +348,15 @@ const ga4Data = await ga4Res.json();
                     labels: ['Top 10', '11-20', '21-50', '51+'],
                     datasets: [{
                         label: 'Keywords',
-                        data: [buck'1-uckets['11-20'], buckets['21-50'], buckets['51-100']],
+                        data: [buckets['1-10'], buckets['11-20'], buckets['21-50'], buckets['51-100']],
                         backgroundColor: '#3b82f6',
                         borderRadius: 4
                     }]
                 },
-                options: { 
-                    maintainAspectRatio: false, 
+                options: {
+                    maintainAspectRatio: false,
                     plugins: { legend: { display: false } },
-                    scales: { y: { beginAtZero: true, grid: { display:false } }, x: { grid: { display:false } } }
+                    scales: { y: { beginAtZero: true, grid: { display: false } }, x: { grid: { display: false } } }
                 }
             });
         }

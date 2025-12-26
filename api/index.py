@@ -49,6 +49,24 @@ def content_log():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route('/api/debug', methods=['GET'])
+def debug():
+    """Checks environment setup."""
+    token_present = 'GOOGLE_TOKEN' in os.environ
+    creds_present = 'GOOGLE_CREDENTIALS' in os.environ
+    try:
+        from services.auth import get_credentials
+        get_credentials()
+        auth_status = "OK"
+    except Exception as e:
+        auth_status = f"Error: {str(e)}"
+        
+    return jsonify({
+        "google_token_env": token_present,
+        "google_credentials_env": creds_present,
+        "auth_test": auth_status
+    })
+
 # Vercel Serverless Entry Point
 # Note: Vercel looks for 'app' by default in index.py
 if __name__ == '__main__':
